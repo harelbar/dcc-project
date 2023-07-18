@@ -11,6 +11,7 @@ char st[16]="sdf",ff[16];
 extern int temp[2], side;
 volatile unsigned int Results[8];
 unsigned int Index,g=0;
+
 void main(void){
     P5OUT = 0x00;
 
@@ -39,7 +40,8 @@ void main(void){
 
         case state2: //sonic
             while(1){
-               trigger_ultrasonic();
+             //   trigger_ultrasonic();
+                enable_interrupts();
                 print_measurments(diff,diff);
 
 //                sprintf(st, "%d", temp[0]);

@@ -26,6 +26,9 @@
 #define TB6PortSEL         P3SEL
 #define TB6PortDIR         P3DIR
 
+#define TA1PortSEL         P1SEL
+#define TA1PortDIR         P1DIR
+
 #define TA2PortSEL         P2SEL
 #define TA2PortDIR         P2DIR
 
@@ -39,7 +42,12 @@
 #define TB5                BIT6
 #define TB6                BIT7
 
+
 #define TA2                BIT0
+#define TA2                BIT0
+
+#define TA1                BIT2
+#define TA1                BIT2
 
 
 

@@ -48,18 +48,13 @@ void LDR_measurement(int t){
 }
 
 void trigger_ultrasonic(){
-    delay_us(del60ms);
-    delay_us(del60ms);
-    delay_us(del60ms);
-
+    long_delay();
     delay2();
     P5OUT ^= 0x02;
     delay2();
     P5OUT ^= 0x02;
     long_delay();
 }
-
-
 
 void print_measurments(int LLDR , int RLDR){
     char L[16],R[16];
@@ -76,40 +71,3 @@ void print_measurments(int LLDR , int RLDR){
     lcd_putrow(R);
     long_delay();
 }
-
-
-//int LDR_measure(){
-//
-//
-//    //make ADC conversion
-//    ADC_config();
-//    ADC_start();
-//
-//    enable_interrupts();
-//    enterLPM(mode0);
-//    disable_interrupts();
-//    ADC12CTL0 &= ~ADC12ON;                    // Disable ADC10 interrupt
-//
-//    return ADC12MEM;
-//
-//}
-
-//void scan_lights(int t){
-//    int angle = 170;
-//    while (state == state2){
-//        // increment servo motor angle
-//        angle = (angle + 1)%180;
-//        servo_angle(angle);
-//
-//        //scan lights
-//        ultrasonic_config();
-//        int distance = LDR_measure();
-//
-//        //Display results
-//        lcd_reset();
-//        lcd_puts("LDR[mv]:");
-//        lcd_print_voltage(distance * 3.4);       // Display results
-//        break;
-//    }
-//    //stopTimerA0();
-//}
