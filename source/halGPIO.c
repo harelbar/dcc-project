@@ -286,8 +286,15 @@ void __attribute__ ((interrupt(TIMER0_A1_VECTOR))) Timer_A (void)
     switch(TAIV){
         case TAIV_TACCR1:
             TAIV &= ~TAIV_TACCR1;
-            LPM0_EXIT;
+            temp[i] = TACCR2;
+            i += 1;
+            TACCTL2 &= ~CCIFG ;
+            if (i==2) {
+              diff=temp[i-1]-temp[i-2];
+              i=0;
+            }
 
+            LPM0_EXIT;
             break;
 
         case TAIV_TACCR2:           //CAPTURE ISR
@@ -302,6 +309,10 @@ void __attribute__ ((interrupt(TIMER0_A1_VECTOR))) Timer_A (void)
 
             LPM0_EXIT;
             break;
+        case TAIV_TAIFG:
+            TAIV &= ~TAIV_TAIFG;
+                LPM0_EXIT;
+                break;
 
         }
 

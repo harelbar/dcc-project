@@ -96,7 +96,7 @@ void TimerB_Config(){
     TACCTL2 = OUTMOD_7;                       // TACCR2 toggle/set
     TACCR2 = 2000;                              // TACCR2 PWM duty cycle
 
-    TACTL = TASSEL_2 + MC_1 ;
+    TACTL = TASSEL_2 + MC_1 + TAIE;
     _BIS_SR(GIE);                     // enable interrupts globally
 }
 
