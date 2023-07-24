@@ -10,8 +10,7 @@ void sysConfig(){
     GPIOconfig();
     TimerB_Config();
     lcd_init();
-
-
+    UART_Config();
 
 }
 
@@ -71,6 +70,12 @@ void print_measurments(int LLDR , int RLDR){
     lcd_putrow("LLDR: ");
     lcd_putrow(R);
     long_delay();
+}
+
+void send_msg(){
+    int ss=12345;
+    sprintf(message, "%d s", ss);
+
 }
 
 

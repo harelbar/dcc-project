@@ -14,6 +14,7 @@ extern void enterLPM(unsigned char);
 
 extern void enable_interrupts();
 extern void disable_interrupts();
+extern char message[50];
 //extern void write_freq_tmp_LCD();
 //extern void write_signal_shape_tmp_LCD();
 //

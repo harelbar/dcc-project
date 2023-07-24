@@ -11,10 +11,12 @@ char st[16]="sdf",ff[16];
 extern int temp[2], side;
 volatile unsigned int Results[8];
 unsigned int Index,g=0;
+
 void main(void){
+
     P5OUT = 0x00;
 
-    state = state2;       // start in idle state on RESET
+    state = state4;       // start in idle state on RESET
     lpm_mode = mode0;     // start in idle state on RESET
     sysConfig();          // Configure GPIO, Stop Timers, Init LCD
     //_BIS_SR(CPUOFF);                          // Enter LPM0
@@ -56,6 +58,14 @@ void main(void){
                 LDR_measurement(500);
                 print_measurments(Results[0],Results[1]);
 
+
+            }
+        break;
+        case state4:
+            while(1){
+                send_msg();
+
+                _BIS_SR(LPM3_bits + GIE);                 // Enter LPM3 w/ interrupt
 
             }
         break;

@@ -1,8 +1,8 @@
 #include  "../header/halGPIO.h"
 unsigned int EndOfRecord = 0;
 
-int temp[2],i=0,diff;
-
+int temp[2],i=0,diff,msc_cnt=0;
+char message[50];
 void enterLPM(unsigned char LPM_level){
 	if (LPM_level == 0x00) 
 	  _BIS_SR(LPM0_bits);     /* Enter Low Power Mode 0 */
@@ -304,6 +304,31 @@ void __attribute__ ((interrupt(TIMER0_B1_VECTOR))) Timer_A (void)
 
 }
 
+//#pragma vector=USART1RX_VECTOR
+//__interrupt void USART1_rx (void)
+//{
+//  while (!(IFG2 & UTXIFG1));                // USART1 TX buffer ready?
+//  TXBUF1 = RXBUF1;                          // RXBUF1 to TXBUF1
+//}
+#pragma vector=USART1RX_VECTOR
+__interrupt void USART1_rx (void)
+{
+  if (RXBUF1 == 'u')                     // 'u' received?
+  {
+    msc_cnt = 0;
+    IE2 |= UTXIE1;                        // Enable USCI_A0 TX interrupt
+    TXBUF1 = message[msc_cnt++];
+  }
+}
+#pragma vector=USART1TX_VECTOR
+__interrupt void USART1_tx (void)
+{
+    //IE2 |= UTXIE1;                        // Enable USCI_A0 TX interrupt
+    TXBUF1 = message[msc_cnt++];                 // TX next character
+
+  if (msc_cnt == 5)              // TX over?
+    IE2 &= ~UTXIE1;                       // Disable USCI_A0 TX interrupt
+}
 
 //    switch(lpm_mode){
 //        case mode0:

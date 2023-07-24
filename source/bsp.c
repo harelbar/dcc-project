@@ -102,6 +102,31 @@ void TimerB_Config(){
     _BIS_SR(GIE);                     // enable interrupts globally
 }
 
+void UART_Config(){
+
+    volatile unsigned int i;
+
+      WDTCTL = WDTPW + WDTHOLD;                 // Stop WDT
+      FLL_CTL0 |= XCAP14PF;                     // Configure load caps
+
+      do
+      {
+      IFG1 &= ~OFIFG;                           // Clear OSCFault flag
+      for (i = 0x47FF; i > 0; i--);             // Time for flag to set
+      }
+      while ((IFG1 & OFIFG));                   // OSCFault flag still set?
+
+      P4SEL |= 0x03;                            // P4.1,0 = USART1 TXD/RXD
+      ME2 |= UTXE1 + URXE1;                     // Enable USART1 TXD/RXD
+      U1CTL |= CHAR;                            // 8-bit character
+      U1TCTL |= SSEL0;                          // UCLK = ACLK
+      U1BR0 = 0x03;                             // 32k/9600 - 3.41
+      U1BR1 = 0x00;                             //
+      U1MCTL = 0x4A;                            // Modulation
+      U1CTL &= ~SWRST;                          // Initialize USART state machine
+      IE2 |= URXIE1;                            // Enable USART1 RX interrupt
+
+}
 //void delay_us(unsigned int del){
 //    TBCCTL4 |= CCIE;
 //    if(TBR<Periode_60ms_val-del)
