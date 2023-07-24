@@ -23,6 +23,8 @@
  *         GPIO configuration           *
  *______________________________________*/
 void GPIOconfig(void){
+    //P6DIR &= ~BIT6;             // input -> P6.6 -> AMPLIFIER -> DAC0
+
     TB1PortSEL |= TB1;
     TB1PortDIR |= TB1;
 
@@ -38,16 +40,15 @@ void GPIOconfig(void){
     TA2PortSEL |= TA2;
     TA2PortDIR |= TA2;
 
-    TA1PortSEL |= TA1;
-    TA1PortDIR &= ~TA1;
-
     // LCD configuration
     LCD_DATA_WRITE &= ~0xFF;
     LCD_DATA_DIR |= 0xF0;    // P10.4-P10.7 To Output('1')
     LCD_DATA_SEL &= ~0xF0;   // Bit clear P10.4-P10.7
     LCD_CTL_SEL  &= ~0xE0;   // Bit clear P9.5-P9.7
-
     P5DIR |= 0x02;                            // P5.1 output
+
+
+
 
     LDR1SEL |= 0x01;                            // Enable A/D channel A0
     LDR2SEL |= 0x02;                            // Enable A/D channel A0
@@ -75,7 +76,7 @@ void TimerB_Config(){
     TBCCTL1 |= OUTMOD_7;                       // TBCCR1 toggle/set
     TBCCR1 = 10;                              // TACCR1 PWM duty cycle
     //  TB2_CONFIG
-    TBCCTL2 |= CAP | CCIE | CCIS_0 | CM_3 ;                       // TACCR2 toggle/set
+    TBCCTL2 |= CAP | CCIE | CCIS_0 | CM_3 | SCS;                       // TACCR2 toggle/set
 
     //  TB3_CONFIG
    // TBCCTL3 = OUTMOD_7;                       // TACCR2 toggle/set
@@ -89,14 +90,15 @@ void TimerB_Config(){
     TBCTL = TBSSEL_2 + MC_1 + ID_0;                  // SMCLK, up-down mode
 
 
-    TACCTL1 |= CAP | CCIE | CCIS_0 | CM_3 | SCS;
+
+
 
 
     TACCR0 = Periode_20ms_val;                             // 60 ms Period/2
     TACCTL2 = OUTMOD_7;                       // TACCR2 toggle/set
     TACCR2 = 2000;                              // TACCR2 PWM duty cycle
 
-    TACTL = TASSEL_2 + MC_1 + TAIE;
+    TACTL = TASSEL_2 + MC_1;
     _BIS_SR(GIE);                     // enable interrupts globally
 }
 
@@ -115,8 +117,10 @@ void TimerB_Config(){
 //}
 
 void delay2(){
-    volatile int f = 10;
-    while(f--);
+    volatile int f;
+    f=0;
+    f++;
+    f--;
 
 }
 
@@ -151,11 +155,9 @@ void ADC_config(){
 void ADC_start(){
     ADC12CTL0 |= ENC + ADC12SC;                             // Sampling and conversion start
 }
-
 void ADC_stop(){
     ADC12CTL0 &= ~ENC & ~ADC12SC;                             // Sampling and conversion start
 }
-
 /** _______________________________________________________________________________________________*
  *                                                                                                *
  *                                                                                                *

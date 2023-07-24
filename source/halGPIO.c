@@ -240,18 +240,36 @@ void lcd_print_voltage(int num) {
             LPM0_EXIT;
 
             break;
-
+        /****** capture ISR *****
+         *
+         *      TB2 acts in capture
+         * *********************/
         case TBIV_TBCCR2:           //CAPTURE ISR
             TBIV &= ~TBIV_TBCCR2;
-            temp[i] = TBCCR2;
-            i += 1;
-            TBCCTL2 &= ~CCIFG ;
+            if(i==0) {
+                // clear TBR to start counting from zero
+                //TBR = 0
+                //TBCTL |= TBCLR;
+                //rising edge
+                //revcord count value
+            }
+                temp[i] = TBCCR2;
+                i += 1;
+                TBCCTL2 &= ~CCIFG;
+            
             if (i==2) {
-                diff=temp[i-1]-temp[i-2];
+                if(temp[0] < temp[1]){
+                    diff = temp[1] - temp[0];
+                }
+                else{
+                    //max value of TBR is 131071, in hex 0xFFFF
+                    diff = 0xFFFF - temp[0] + temp[1];
+                }
                 i=0;
+                LPM0_EXIT;
             }
 
-            LPM0_EXIT;
+
             break;
 
         case TBIV_TBCCR3:
@@ -278,43 +296,11 @@ void lcd_print_voltage(int num) {
 #pragma vector = TIMER0_A1_VECTOR
 __interrupt void Timer_A (void)
 #elif defined(__GNUC__)
-void __attribute__ ((interrupt(TIMER0_A1_VECTOR))) Timer_A (void)
+void __attribute__ ((interrupt(TIMER0_B1_VECTOR))) Timer_A (void)
 #else
 #error Compiler not supported!
 #endif
 {
-    switch(TAIV){
-        case TAIV_TACCR1:
-            TAIV &= ~TAIV_TACCR1;
-            temp[i] = TACCR2;
-            i += 1;
-            TACCTL2 &= ~CCIFG ;
-            if (i==2) {
-              diff=temp[i-1]-temp[i-2];
-              i=0;
-            }
-
-            LPM0_EXIT;
-            break;
-
-        case TAIV_TACCR2:           //CAPTURE ISR
-            TAIV &= ~TAIV_TACCR2;
-            temp[i] = TACCR2;
-            i += 1;
-            TACCTL2 &= ~CCIFG ;
-            if (i==2) {
-                diff=temp[i-1]-temp[i-2];
-                i=0;
-            }
-
-            LPM0_EXIT;
-            break;
-        case TAIV_TAIFG:
-            TAIV &= ~TAIV_TAIFG;
-                LPM0_EXIT;
-                break;
-
-        }
 
 }
 
