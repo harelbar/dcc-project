@@ -5,7 +5,7 @@
 #include  "../header/bsp.h"    		// private library - BSP layer
 #include  "../header/app.h"    		// private library - APP layer
 
-extern int diff;
+extern unsigned volatile int diff;
 
 extern enum FSMstate state;   // global variable
 extern enum SYSmode lpm_mode; // global variable
@@ -95,6 +95,9 @@ extern void lcd_strobe();
 extern void DelayMs(unsigned int);
 extern void DelayUs(unsigned int);
 extern void delay(unsigned int t);
+extern void start_msg();
+extern void stop_PWM();
+
 
 //extern unsigned int x;
 //extern char new_x[5];

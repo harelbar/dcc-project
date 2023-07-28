@@ -1,29 +1,26 @@
 #include  "../header/api.h"    		// private library - API layer
 #include  "../header/halGPIO.h"     // private library - HAL layer
-#include "msp430xG46x.h"
+//#include "msp430xG46x.h"
+#include  <msp430g2553.h>          // MSP430x2xx
 #include "stdio.h"
-
+int fdfd=0;
 
 
 
 void sysConfig(){
     GPIOconfig();
-    TimerB_Config();
+    TimerA0_Config();
+    TimerA1_Config();
     lcd_init();
     UART_Config();
 
 }
 
 void set_angel(int phi){
-    TACCR2=phi;
+    TA1CCR1=phi;
+    start_PWM();
 }
 
-/*______________________________________
- *                                      *
- *          LCD API                     *
- *______________________________________*/
-
-//
 void lcd_reset(){
     lcd_clear();
     lcd_home();
@@ -36,27 +33,46 @@ void long_delay(){
     delay_us(del60ms);
 }
 
-void LDR_measurement(int t){
-        ADC_config();
+void LDR_measurement(unsigned volatile int arr[]){
+        fdfd++;
+        ADC_config0();
         ADC_start();
-        enable_interrupts();
-        enterLPM(mode0);
-        ADC_stop();
+         fdfd++;
+         
+       // enable_interrupts();
+         fdfd++;
+         
+        __bis_SR_register(LPM0_bits + GIE);
+      //  ADC_stop();
+        arr[0]=ADC10MEM;
+        fdfd++;
+        
+        ADC_config1();
+        ADC_start();
+      //  enable_interrupts();
+        __bis_SR_register(LPM0_bits + GIE);
+      //  ADC_stop();
+        arr[1]=ADC10MEM;
+        fdfd++;
+        
         long_delay();
         lcd_reset();
+        fdfd++;
 }
 
 void trigger_ultrasonic(){
     delay_us(del60ms);
-    delay2();
-    P5OUT ^= 0x02;
-    delay2();
-    P5OUT ^= 0x02;
+   // delay2();
+    delay_us(20);
+    Trigger_OUT |= 0x08;
+    //delay2();
+    delay_us(20);
+    Trigger_OUT &= ~0x08;
     long_delay();
 
 }
 
-void print_measurments(int LLDR , int RLDR){
+void print_measurments(unsigned int LLDR , unsigned int RLDR){
     char L[16],R[16];
     sprintf(L, "%d", LLDR);
     sprintf(R, "%d", RLDR);
@@ -75,42 +91,6 @@ void print_measurments(int LLDR , int RLDR){
 void send_msg(){
     int ss=12345;
     sprintf(message, "%d s", ss);
+    start_msg();
 
 }
-
-
-//int LDR_measure(){
-//
-//
-//    //make ADC conversion
-//    ADC_config();
-//    ADC_start();
-//
-//    enable_interrupts();
-//    enterLPM(mode0);
-//    disable_interrupts();
-//    ADC12CTL0 &= ~ADC12ON;                    // Disable ADC10 interrupt
-//
-//    return ADC12MEM;
-//
-//}
-
-//void scan_lights(int t){
-//    int angle = 170;
-//    while (state == state2){
-//        // increment servo motor angle
-//        angle = (angle + 1)%180;
-//        servo_angle(angle);
-//
-//        //scan lights
-//        ultrasonic_config();
-//        int distance = LDR_measure();
-//
-//        //Display results
-//        lcd_reset();
-//        lcd_puts("LDR[mv]:");
-//        lcd_print_voltage(distance * 3.4);       // Display results
-//        break;
-//    }
-//    //stopTimerA0();
-//}

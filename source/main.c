@@ -9,14 +9,13 @@ unsigned int del60ms=Periode_60ms_val;
 unsigned int del10us=10;
 char st[16]="sdf",ff[16];
 extern int temp[2], side;
-volatile unsigned int Results[8];
+volatile unsigned int Results[2];
 unsigned int Index,g=0;
 
 void main(void){
+    P2OUT = 0x00;
 
-    P5OUT = 0x00;
-
-    state = state4;       // start in idle state on RESET
+    state = state2;       // start in idle state on RESET
     lpm_mode = mode0;     // start in idle state on RESET
     sysConfig();          // Configure GPIO, Stop Timers, Init LCD
     //_BIS_SR(CPUOFF);                          // Enter LPM0
@@ -33,9 +32,11 @@ void main(void){
         case state1: //PB0 recorder
             while(1){    //servo motor
                 a+=9;
-                if(a>2310) a=510;
+                if(a>2310) 
+                  a=510;
                 set_angel(a);       // set CCR3
                 delay_us(Periode_60ms_val);
+                stop_PWM();
             }
         break;
 
@@ -49,16 +50,15 @@ void main(void){
                cursor_off;
                lcd_reset();
                lcd_puts(st);
+               delay_us(Periode_60ms_val);
             }
         break;
 
         case state3:
 
             while(1){
-                LDR_measurement(500);
-                print_measurments(Results[0],Results[1]);
-
-
+                LDR_measurement(Results);
+                print_measurments(Results[0] ,Results[1]);
             }
         break;
         case state4:
@@ -74,17 +74,7 @@ void main(void){
     }
 
 }
-#pragma vector = ADC12_VECTOR
-__interrupt void ADC12_ISR(void)
-{
-  Results[0] = ADC12MEM0;             // Move result, IFG is cleared
-  Results[1] = ADC12MEM1;             // Move result, IFG is cleared
 
-  //__no_operation();                         // SET BREAKPOINT HERE
-  ADC12CTL0 &= ~ENC;
-  LPM0_EXIT;
-
-}
 
   
   

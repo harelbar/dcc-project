@@ -3,6 +3,13 @@
 ////UPDATE14;55
 #include  "../header/halGPIO.h"     // private library - HAL layer
 
+
+void LDR_measurement(unsigned volatile int arr[]);
+void print_measurments(unsigned volatile int LLDR , unsigned volatile int RLDR);
+void send_msg();
+void start_PWM();
+
+
 extern void sysConfig(void);
 extern void set_angel(int phi);
 //
