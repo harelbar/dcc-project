@@ -2,10 +2,13 @@
 unsigned int EndOfRecord = 0;
 
 unsigned volatile int temp[2],i=0,j=0,diff,msc_cnt=0;
-char message[50];
+char message[40];
 char new_x[50];
+char script[64];
+char c;
 int First_Time = 0x01;
 int count=0;
+
 void enterLPM(unsigned char LPM_level){
 	if (LPM_level == 0x00) 
 	  _BIS_SR(LPM0_bits);     /* Enter Low Power Mode 0 */
@@ -176,8 +179,9 @@ void lcd_print_voltage(int num) {
 
 void start_msg(){
   msc_cnt = 0;
-  IE2 |= UCA0TXIE;                        // Enable USCI_A0 TX interrupt 
   UCA0TXBUF = message[msc_cnt++];
+  IE2 |= UCA0TXIE;                        // Enable USCI_A0 TX interrupt
+
 }
 
 void start_PWM(){
@@ -224,8 +228,8 @@ void __attribute__ ((interrupt(TIMER1_A1_VECTOR))) TIMER1_A1_ISR (void)
           
         break;
       case TA1IV_TACCR1:        
-//        TA1CCTL1 &= ~CCIFG;
-//        LPM0_EXIT;        
+        //TA1CCTL1 &= ~CCIFG;
+        LPM0_EXIT;
         break;             // Vector  4:  TACCR2 CCIFG
       case TA1IV_6: break;                  // Vector  6:  Reserved CCIFG
       case TA1IV_8: break;                  // Vector  8:  Reserved CCIFG
@@ -289,8 +293,6 @@ void __attribute__ ((interrupt(TIMER0_A0_VECTOR))) Timer_A (void)
 #endif
 {
   LPM0_EXIT;
-
-  
 }
 
 
@@ -310,6 +312,14 @@ void __attribute__ ((interrupt(TIMER0_A0_VECTOR))) Timer_A (void)
 //
 //}
 
+/** _______________________________________________________________________________________________*
+ *                                                                                                 *
+ *                                      TX ISR                                                     *
+ *                                                                                                 *
+ *  -----------------------------------------------------------------------------------------------*
+ * handles the UART serial  communication module (USCI) Transmission interrupt                     *
+ *                                                                                                 *
+ *_________________________________________________________________________________________________*/
 #if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
 #pragma vector=USCIAB0TX_VECTOR
 __interrupt void USCI0TX_ISR(void)
@@ -319,13 +329,20 @@ void __attribute__ ((interrupt(USCIAB0TX_VECTOR))) USCI0TX_ISR (void)
 #error Compiler not supported!
 #endif
 {
-  UCA0TXBUF = message[msc_cnt++];                 // TX next character
-
-  if (msc_cnt == sizeof message - 1)              // TX over?
+  c = message[msc_cnt++];                 // TX next character
+  UCA0TXBUF = c;
+  if (c == '\n')              // TX over?
     IE2 &= ~UCA0TXIE;                       // Disable USCI_A0 TX interrupt
-
-
+    LPM0_EXIT;
 }
+/** _______________________________________________________________________________________________*
+ *                                                                                                 *
+ *                                      RX ISR                                                     *
+ *                                                                                                 *
+ *  -----------------------------------------------------------------------------------------------*
+ * handles the UART serial  communication module (USCI) Receiving  interrupt                       *
+ *                                                                                                 *
+ *_________________________________________________________________________________________________*/
 
 #if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
 #pragma vector=USCIAB0RX_VECTOR
@@ -337,17 +354,27 @@ void __attribute__ ((interrupt(USCIAB0RX_VECTOR))) USCI0RX_ISR (void)
 #endif
 {
 //  IE2 &= ~UCA0RXIE;
-  if(state==state4){
-    new_x[j++] = UCA0RXBUF;
-    if (j==4){
-        j = 0;
+  if(state==scriptmode){
+    c = UCA0RXBUF;
+    if(c == 'r')
         state = state0;
- //       IE2 |= UCA0RXIE;
-        LPM0_EXIT;
+    else{
+        script[j++] = c;
+        if (j== 64 || c == '\n'){
+            j = 0;
+            //state = state0;
+            //IE2 |= UCA0RXIE;
+            LPM0_EXIT;
+
+        }
         
     }
-  }else if      (UCA0RXBUF == '1')                     // '1' received?
-        {state = state1; }      // Set state1
+
+  }     else if  (UCA0RXBUF == '0')                     // '0' received?
+        {state = state0; }      // Set state1
+
+         else if (UCA0RXBUF == '1')                // '1' received?
+        {state = state1; }      // Set state2
 
         else if (UCA0RXBUF == '2')                // '2' received?
         {state = state2; }      // Set state2
@@ -369,8 +396,10 @@ void __attribute__ ((interrupt(USCIAB0RX_VECTOR))) USCI0RX_ISR (void)
         else if (UCA0RXBUF == '6')                // '6' received?
         {state = state6; }
             // Set state6
-        else if (UCA0RXBUF == '7')                // '7' received?
-        {state = state7; }                         // Set state7
+        else if (UCA0RXBUF == 's'){                 // 's' received?
+            state = scriptmode;
+        }
+
 
         else if (UCA0RXBUF == '8')                // '8' received?
         {state = state0; }                         // Set state0
@@ -397,32 +426,6 @@ void __attribute__ ((interrupt(USCIAB0RX_VECTOR))) USCI0RX_ISR (void)
 }
 
 
-//    switch(lpm_mode){
-//        case mode0:
-//            LPM0_EXIT; // must be called from ISR only
-//            break;
-//
-//        case mode1:
-//            LPM1_EXIT; // must be called from ISR only
-//            break;
-//
-//        case mode2:
-//            LPM2_EXIT; // must be called from ISR only
-//            break;
-//
-//        case mode3:
-//            LPM3_EXIT; // must be called from ISR only
-//            break;
-//
-//        case mode4:
-//            LPM4_EXIT; // must be called from ISR only
-//            break;
-//        }
-
-          //TBCTL &= ~TBIFG; // Clear the interrupt flag
-          //TBCTL = TBCLR;
-
-
 // ADC10 interrupt service routine
 #if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
 #pragma vector=ADC10_VECTOR
@@ -433,72 +436,5 @@ void __attribute__ ((interrupt(ADC10_VECTOR))) ADC10_ISR (void)
 #error Compiler not supported!
 #endif
 {
- // __bic_SR_register_on_exit(CPUOFF);        // Clear CPUOFF bit from 0(SR)
- // ADC10CTL0 &= ~ADC10IFG;
-    ADC10CTL0=0x00;
-    ADC10AE0=0x00;
-   // LPM0_EXIT;
-    __bic_SR_register(LPM0_bits + GIE);
+    __bic_SR_register_on_exit(CPUOFF);
 }
-
-//  #pragma vector = DMA_VECTOR
-//  __interrupt void DMA_ISR (void){
-//      LPM0_EXIT;
-//      _BIC_SR(DMAIV);
-//  }
-
-
-//
-//#pragma vector=PORT1_VECTOR  // For Push Buttons
-//  __interrupt void PBs_handler(void){
-//      DelayUs(debounceVal);
-//
-//	if(PBsArrIntPend & PB0){
-//	    lcd_clear();
-//	    state = state1;
-//	    PBsArrIntPend &= ~PB0;
-//	}
-//    else if(PBsArrIntPend & PB1){
-//        lcd_clear();
-//        state = state2;
-//        lcd_home();
-//	    PBsArrIntPend &= ~PB1;
-//    }
-//    else if(PBsArrIntPend & PB2){
-//        lcd_clear();
-//        state = state3;
-//	    PBsArrIntPend &= ~PB2;
-//
-//    }
-//
-//    else if(PBsArrIntPend & PB3){
-//
-//           state = state4;
-//           PBsArrIntPend &= ~PB3;
-//       }
-//    else PBsArrIntPend &= 0x0F;
-//
-//        switch(lpm_mode){
-//		case mode0:
-//		 LPM0_EXIT;
-//		 break;
-//
-//		case mode1:
-//		 LPM1_EXIT;
-//		 break;
-//
-//		case mode2:
-//		 LPM2_EXIT;
-//		 break;
-//
-//        case mode3:
-//		 LPM3_EXIT;
-//		 break;
-//
-//        case mode4:
-//		 LPM4_EXIT;
-//		 break;
-//	}
-//
-//}
-//

@@ -43,9 +43,10 @@ void GPIOconfig(void){
     Trigger_OUT &= ~Trigger;
 
 
-    LDR1SEL |= 0x01;                            // Enable A/D channel A0
-    LDR2SEL |= 0x08;                            // Enable A/D channel A0
+    LDR1SEL |= LDR0;                            // Enable A/D channel A0
+    LDR2SEL |= LDR1;                            // Enable A/D channel A0
 
+    P1DIR &= ~BIT0 + ~BIT3;
     _BIS_SR(GIE);                     // enable interrupts globally
 
 }
@@ -53,16 +54,19 @@ void GPIOconfig(void){
 void TimerA1_Config(){
     WDTCTL = WDTPW +WDTHOLD;                  // Stop WDT
     //  TB0_CONFIG
-    TA1CCR0 = MAX_TBR-2;                             // 60 ms Period/2
+    TA1CCR0 = MAX_TBR-3;                             // 60 ms Period/2
 
     //  TB1_CONFIG
     TA1CCTL1 |= OUTMOD_6 ;                       // TBCCR1 toggle/set
-    TA1CCR1 = 1000;                              // TACCR1 PWM duty cycle
+    TA1CCR1 = MAX_TBR-2;                              // TACCR1 PWM duty cycle
     
     //  TB2_CONFIG
-    TA1CCTL2 |= CAP | CCIE | CCIS_0 | CM_3 | SCS;                       // TACCR2 toggle/set
-
+    TA1CCTL2 |= CAP | CCIS_0 | CM_3 | SCS;                       // TACCR2 toggle/set
+    /// removed ccie
  
+    /**
+     * WHY SHULD THEY HAVE CCIE>? MAYBE WE GO TO IDLE, WOULD THEY SSTILL NEED IT?
+     * */
     TA1CTL |= TASSEL_2 | MC_1 | CCIE;          // counts to CCR0
 
 //    TA1CCTL2 = CAP + CM_3 + CCIE + SCS + CCIS_0;
@@ -81,89 +85,90 @@ void TimerA0_Config(){
     TA0CCR0 = MAX_TBR-2;                             // 60 ms Period/2
 
     //  TB1_CONFIG
-    TA0CCTL0 = CCIE;                       // TBCCR1 toggle/set
-    TACTL |= TASSEL_2 | MC_1 | CCIE;          // counts to CCR0
-
+    TACTL |= TASSEL_2 | MC_1 | CCIE;          // counts to CCR0 //WHY DOES IT NEED CCIE RIGHT NOW??
+    //TACTL |= TASSEL_2 | MC_1;
     _BIS_SR(GIE);                     // enable interrupts globally
 }
+/** _______________________________________________________________________________________________*
+ *                                                                                                 *
+ *                                DCO config                                                       *
+ *                                                                                                 *
+ *  -----------------------------------------------------------------------------------------------*
+ * sets the clock frequency of the microcontroller to                                              *
+ * 1 MHz using the DCO (Digitally Controlled Oscillator).                                          *
+ *                                                                                                 *
+ *_________________________________________________________________________________________________*/
 
+void DCO_config() {
+
+    if (CALBC1_1MHZ==0xFF)                  // If calibration constant erased
+        while(1);                               // do not load, trap CPU!!
+
+
+    DCOCTL = 0;                               // Select lowest DCOx and MODx settings
+
+    BCSCTL1 = CALBC1_1MHZ;                    // Set DCO Frequency Range
+    DCOCTL = CALDCO_1MHZ;                      // Set DCO specific frequency within the range
+
+
+
+    //P2DIR = 0xFF;                             // All uuu.x outputs
+    //P2OUT = 0;                                // All P2.x reset
+    P1SEL = BIT1 + BIT2;                     // P1.1 = RXD, P1.2=TXD
+    P1SEL2 = BIT1 + BIT2;                     // P1.1 = RXD, P1.2=TXD
+//    P1DIR |= RXLED + TXLED;
+    P1OUT &= 0x01;
+}
 void UART_Config() {
   WDTCTL = WDTPW + WDTHOLD;                 // Stop WDT
-//  
-//  if (CALBC1_1MHZ==0xFF)					// If calibration constant erased
-//  {											
-//    while(1);                               // do not load, trap CPU!!	
-//  }
-//  DCOCTL = 0;                               // Select lowest DCOx and MODx settings
-//  BCSCTL1 = CALBC1_1MHZ;                    // Set DCO
-//  DCOCTL = CALDCO_1MHZ;
+
   
   UCA0CTL1 |= UCSSEL_2;                     // CLK = SMCLK
-  UCA0BR0 = 104;                           // 
-  UCA0BR1 = 0x00;                           //
-  UCA0MCTL = UCBRS0;               // 
+  UCA0BR0 = 104;                            // UART Baud Rate Control registers
+  UCA0BR1 = 0x00;                           // 1MHz 9600
+  UCA0MCTL = UCBRS0;                        // Modulation UCBRSx = 1
   UCA0CTL1 &= ~UCSWRST;                     // **Initialize USCI state machine**
   IE2 |= UCA0RXIE;                          // Enable USCI_A0 RX interrupt
 }
 
-void delay2(){
-    volatile int f;
-    f=0;
-    f++;
-    f--;
-
-}
 
 void delay_us(unsigned int del){
     TACTL = TACLR;
-    TACTL |= TASSEL_2 | MC_1 | ID_0 | CCIE;                  // SMCLK, up-down mode
+    TACTL |= TASSEL_2 | MC_1 | ID_0;                        // SMCLK, up-down mode
+
+    TA0CCTL0 = CCIE;                                        // TACCR0 interrupt enabled
     TACCR0 = TAR+del;
-//    volatile int a=TACCR0, b=TAR;
-//    a++;
-//    b++;
+
+
     __bis_SR_register(LPM0_bits + GIE);
     TACTL &= ~CCIE;
+
+
+
   //  TBCCTL4 = OUTMOD_4 + CCIE;
 }
-
 void ADC_config0(){
-    WDTCTL = WDTPW + WDTHOLD;                 // Stop watchdog timer
+    ADC10CTL0 = ADC10SHT_2 + ADC10ON + ADC10IE;             // ADC10ON, interrupt enabled
+    ADC10CTL1 = INCH_0 + ADC10SSEL_3;                       // input A3 and SMCL // ADC10CLK/8
 
-   // ADC10CTL0 = ADC10SHT_2 + ADC10ON + ADC10IE; // ADC10ON, interrupt enabled
-    ADC10CTL1 = INCH_0;                       // input A0
-    
-    ADC10AE0 |= 0x01;                         // PA.1 ADC option select
-  //  __enable_interrupt();                     // Enable interrupts
-  
-//     WDTCTL = WDTPW + WDTHOLD;                 // Stop WDT
-//  ADC10CTL0 = ADC10SHT_2 + ADC10ON + ADC10IE; // ADC10ON, interrupt enabled
-//  ADC10CTL1 = INCH_0;                       // input A1
-//  ADC10AE0 |= 0x01;                         // PA.1 ADC option select
-
+    ADC10AE0 |= BIT0;                                       // P1.3 ADC option select
 }
 void ADC_config1(){
-    WDTCTL = WDTPW + WDTHOLD;                 // Stop watchdog timer
-
-   // ADC10CTL0 = ADC10SHT_2 + ADC10ON + ADC10IE; // ADC10ON, interrupt enabled
-    ADC10CTL1 = INCH_3;                       // input A0
-    ADC10AE0 |= 0x08;                         // PA.1 ADC option select
-  //  __enable_interrupt();                     // Enable interrupts
-//    WDTCTL = WDTPW + WDTHOLD;                 // Stop WDT
-//  ADC10CTL0 = ADC10SHT_2 + ADC10ON + ADC10IE; // ADC10ON, interrupt enabled
-//  ADC10CTL1 = INCH_3;                       // input A1
-//  ADC10AE0 |= 0x08;                         // PA.1 ADC option select
-
+    ADC10CTL0 = ADC10SHT_2 + ADC10ON + ADC10IE;             // ADC10ON, interrupt enabled
+    ADC10CTL1 = INCH_3 + ADC10SSEL_3;                       // input A3 and SMCL // ADC10CLK/8
+    ADC10AE0 |= BIT3;                                       // P1.3 ADC option select
 }
 void ADC_start(){
-  
-    ADC10CTL0 =  ADC10SHT_3 | ADC10ON | ADC10IE;                             // Sampling and conversion start
-    ADC10CTL0 |= ADC10SC | ENC;
+    ADC10CTL0 |= ENC + ADC10SC;                             // Sampling and conversion start
+    //__bis_SR_register(LPM0_bits + GIE);
+
 }
 
 void ADC_stop(){
    // ADC10CTL0 &= ~ENC;                             // Sampling and conversion start
    // ADC10CTL0 &= ~ADC10SC;
-  ADC10CTL0=0x00;
-    ADC10AE0=0x00;
+    ADC10CTL0   =0x00;
+    ADC10CTL1   =0x00;
+    ADC10AE0    =0x00;
 }
 

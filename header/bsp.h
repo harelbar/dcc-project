@@ -16,7 +16,7 @@
 #define LDR1SEL           P1SEL
 #define LDR2SEL           P1SEL
 
-#define LDR1              BIT0
+#define LDR0              BIT0
 #define LDR1              BIT3
 
 #define TriggerSEL        P2SEL
@@ -53,7 +53,13 @@ extern void ADC_config1();
 extern void ADC_start();
 extern void ADC_stop();
 
+//uart abstraction
+#define TXLED                   BIT0
+#define RXLED                   BIT6
+#define TXD                     BIT2
+#define RXD                     BIT1
 
+extern void DCO_config();
 #endif
 
 
