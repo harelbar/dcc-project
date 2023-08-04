@@ -19,9 +19,13 @@ void trigger_ultrasonic();
 
 extern unsigned int del60ms;
 extern unsigned int del10us;
+extern char  value;   
 
 extern void sendFormatMessage( int a, int b, int c, int d);
 extern void UART_send();
+extern void copy_C2D (void);
+extern void write_SegC (char value);
+extern void flash_config();
 
 //extern void scan_objects(int t);
 //extern void servo_angle(int angle);

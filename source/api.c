@@ -118,3 +118,65 @@ void send_msg(){
     start_msg();
 
 }
+
+void flash_config(){
+    WDTCTL = WDTPW + WDTHOLD;                 // Stop watchdog timer
+  if (CALBC1_1MHZ==0xFF)					// If calibration constant erased
+  {											
+    while(1);                               // do not load, trap CPU!!	
+  }
+  DCOCTL = 0;                               // Select lowest DCOx and MODx settings
+  BCSCTL1 = CALBC1_1MHZ;                    // Set DCO to 1MHz
+  DCOCTL = CALDCO_1MHZ;
+  FCTL2 = FWKEY + FSSEL0 + FN1;             // MCLK/3 for Flash Timing Generator
+  value = 0;                                // initialize value
+
+}
+
+
+void write_SegC (char value)
+{
+  char *Flash_ptr;                          // Flash pointer
+  unsigned int i;
+
+  Flash_ptr = (char *) 0x1040;              // Initialize Flash pointer
+  FCTL1 = FWKEY + ERASE;                    // Set Erase bit
+  FCTL3 = FWKEY;                            // Clear Lock bit
+  *Flash_ptr = 0;                           // Dummy write to erase Flash segment
+
+  FCTL1 = FWKEY + WRT;                      // Set WRT bit for write operation
+
+  for (i=0; i<64; i++)
+  {
+    *Flash_ptr++ = value;                   // Write value to flash
+  }
+
+  FCTL1 = FWKEY;                            // Clear WRT bit
+  FCTL3 = FWKEY + LOCK;                     // Set LOCK bit
+}
+
+void copy_C2D (void)
+{
+  char *Flash_ptrC;                         // Segment C pointer
+  char *Flash_ptrD;                         // Segment D pointer
+  unsigned int i;
+
+  Flash_ptrC = (char *) 0x1040;             // Initialize Flash segment C pointer
+  Flash_ptrD = (char *) 0x1080;             // Initialize Flash segment D pointer
+  FCTL1 = FWKEY + ERASE;                    // Set Erase bit
+  FCTL3 = FWKEY;                            // Clear Lock bit
+  *Flash_ptrD = 0;                          // Dummy write to erase Flash segment D
+  FCTL1 = FWKEY + WRT;                      // Set WRT bit for write operation
+
+  for (i=0; i<64; i++)
+  {
+    *Flash_ptrD++ = (*Flash_ptrC++ +1);          // copy value segment C to segment D
+  }
+
+  FCTL1 = FWKEY;                            // Clear WRT bit
+  FCTL3 = FWKEY + LOCK;                     // Set LOCK bit
+}
+
+
+
+

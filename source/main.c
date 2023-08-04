@@ -11,11 +11,13 @@ char st[16]="sdf",ff[16];
 extern int temp[2], side;
 volatile unsigned int Results[2];
 unsigned int Index,g=0;
+char  value;   
+
 
 void main(void){
     P2OUT = 0x00;
 
-    state = state0;       // start in idle state on RESET
+    state = state1;       // start in idle state on RESET
     lpm_mode = mode0;     // start in idle state on RESET
     sysConfig();          // Configure GPIO, Stop Timers, Init LCD
     //_BIS_SR(CPUOFF);                          // Enter LPM0
@@ -40,7 +42,7 @@ void main(void){
 
 
                 set_angel(a);       // set CCR3
-                LDR_measurement(Results);
+               // LDR_measurement(Results);
                 trigger_ultrasonic();
 
                 print_measurments(a ,Results[1]);
@@ -110,6 +112,13 @@ void main(void){
                 }
 
             }
+        case state6:
+          while(1)                                  // Repeat forever
+          {
+            write_SegC(value++);                    // Write segment C, increment value
+            copy_C2D();                             // Copy segment C to D
+            __no_operation();                       // SET BREAKPOINT HERE
+          }
         }
 
     }
