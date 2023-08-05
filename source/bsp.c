@@ -75,7 +75,7 @@ void TimerA0_Config(){
     TA0CCR0 = MAX_TBR-2;                             // 60 ms Period/2
 
     //  TB1_CONFIG
-    TACTL |= TASSEL_2 | MC_1 | CCIE;          // counts to CCR0 //WHY DOES IT NEED CCIE RIGHT NOW??
+    TACTL |= TASSEL_2 | MC_1;            // counts to CCR0 //WHY DOES IT NEED CCIE RIGHT NOW??
     //TACTL |= TASSEL_2 | MC_1;
     _BIS_SR(GIE);                     // enable interrupts globally
 }
@@ -129,9 +129,11 @@ void delay_us(unsigned int del){
     TA0CCTL0 = CCIE;                                        // TACCR0 interrupt enabled
     TACCR0 = TAR+del;
 
+    //TACTL = CCIE;
 
     __bis_SR_register(LPM0_bits + GIE);
     TACTL &= ~CCIE;
+    TA0CCTL0 &=~CCIE;
 
 
 

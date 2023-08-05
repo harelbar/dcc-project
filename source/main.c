@@ -15,8 +15,9 @@ unsigned int Index,g=0;
 char value[64];   
 int data1=0,data2=0,data3=0,data4;
 int segments[3]={0X1000,0X1040,0X1080};
+int y=0;
 
-int seg=0;
+int zain_al_hanan_ima_shelo_zona_cos_emek=0;
 //segB[]="0X1040",segC[]="0X1080";
 
 void main(void){
@@ -39,16 +40,19 @@ void main(void){
         break;
 
         case state1: //PB0 recorder
+            TimerA0_Config();
+
             a = 0;
             while(state == state1){    //servo motor
                 a+=inc;
                 if(a>179 -inc || a < -inc){
                   inc*=-1;
+                  a+=4*inc;
                 }
 
 
-               // set_angel(a);       // set CCR3
-                for(int y=0; y<6; y++){
+                set_angel(a);       // set CCR3
+                for(zain_al_hanan_ima_shelo_zona_cos_emek=0; zain_al_hanan_ima_shelo_zona_cos_emek<6; zain_al_hanan_ima_shelo_zona_cos_emek++){
                   delay_us(Periode_60ms_val);
                 }
 
@@ -56,17 +60,17 @@ void main(void){
                 trigger_ultrasonic();
                 Results[0]=(Results[0]+Results[1])/2;
                 Results[0]*=0.1;
-                print_measurments(Results[0] ,Results[1]);
+             //   print_measurments(Results[0] ,Results[1]);
                 delay_us(Periode_60ms_val);
                 TA1CCTL2 &= ~CCIE;
                 TA1CCTL1 &= ~CCIE;
                 TA1CCTL0 &= ~CCIE;
                 TA0CTL &= ~TAIE;
                 //diff=diff/10;
-                diff=diff*0.069;
-                //print_measurments(a ,diff);
+                diff=diff*0.69;
+                print_measurments(Results[0]  ,diff);
 
-                //sendFormatMessage(a,Results[0] ,Results[1],diff);
+                sendFormatMessage(a,Results[0] ,Results[1],diff);
                 delay_us(1500);
                 //DelayUs(1600);
                 
@@ -74,7 +78,7 @@ void main(void){
                 write_SegC(value, segments[(seg++)%3]);                    // Write segment C, increment value
                 // copy_C2D();                             // Copy segment C to D
                 __no_operation(); 
-                stop_PWM();
+            //    stop_PWM();
 
             }
         break;
@@ -113,26 +117,26 @@ void main(void){
                 lcd_reset();
                 lcd_puts("script mode");
 
-                TA1CCTL2 &= ~CCIE;
-                TA1CCTL1 &= ~CCIE;
-                TA1CCTL0 &= ~CCIE;
-                //TACTL &= ~CCIE;
 
                 IE2 &= ~UCA0TXIE;                       // Disable USCI_A0 TX interrupt
 
-                _BIS_SR(LPM3_bits + GIE);                 // Enter LPM3 w/ interrupt
-                int i = 0;
-                while(script[i] != '\n'){
-                    lcd_reset();
-                    lcd_data(script[i++]);
-                    int d =160000;
-                    while(d--);
+                _BIS_SR(LPM0_bits + GIE);                 // Enter LPM3 w/ interrupt
+                delay_us(1500);
+                if(state==scriptmode){
+                    write_SegC(value, segments[(seg++)%3]);
 
                 }
+                                   // Write segment C, increment value
+                lcd_data(0x30+seg);
+                TA1CCTL2 &= ~CCIE;
+                                TA1CCTL1 &= ~CCIE;
+                                TA1CCTL0 &= ~CCIE;
+                                TA0CTL &= ~TAIE;
 
             }
+            break;
         case state6:
-          while(1)                                  // Repeat forever
+          while(state == state6)                                  // Repeat forever
           {
             sprintf(value, "%d|%d|%d|%d", data1++,data2++,data3++,data4++);
             write_SegC(value, segments[(seg++)%3]);                    // Write segment C, increment value

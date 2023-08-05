@@ -8,7 +8,7 @@ char script[64];
 char c;
 int First_Time = 0x01;
 int count=0;
-
+int seg=0;
 void enterLPM(unsigned char LPM_level){
 	if (LPM_level == 0x00) 
 	  _BIS_SR(LPM0_bits);     /* Enter Low Power Mode 0 */
@@ -249,6 +249,7 @@ void __attribute__ ((interrupt(TIMER0_A0_VECTOR))) Timer_A (void)
 #error Compiler not supported!
 #endif
 {
+  TA0CCTL0 &= ~TAIFG;
   LPM0_EXIT;
 }
 
@@ -298,6 +299,14 @@ void __attribute__ ((interrupt(USCIAB0RX_VECTOR))) USCI0RX_ISR (void)
     c = UCA0RXBUF;
     if(c == 'r')
         state = state0;
+    else if (c == '%')
+        LPM0_EXIT;
+    else if (c == '!')
+        seg = 0;
+    else if (c == '@')
+        seg = 1;
+    else if (c == '#')
+        seg = 2;
     else{
         script[j++] = c;
         if (j== 64 || c == '\n'){
@@ -307,7 +316,8 @@ void __attribute__ ((interrupt(USCIAB0RX_VECTOR))) USCI0RX_ISR (void)
             LPM0_EXIT;
 
         }
-        
+
+
     }
 
   }     else if  (UCA0RXBUF == '0')                     // '0' received?
@@ -338,13 +348,14 @@ void __attribute__ ((interrupt(USCIAB0RX_VECTOR))) USCI0RX_ISR (void)
             // Set state6
         else if (UCA0RXBUF == 's'){                 // 's' received?
             state = scriptmode;
+            __bic_SR_register_on_exit(CPUOFF);
         }
 
 
         else if (UCA0RXBUF == '8')                // '8' received?
         {state = state0; }                         // Set state0
  // IE2 |= UCA0RXIE;
-  if (state!=state4){
+  if (state!=scriptmode){
     switch(lpm_mode){
         case mode0:
             LPM0_EXIT; // must be called from ISR only

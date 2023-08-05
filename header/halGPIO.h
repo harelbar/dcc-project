@@ -6,7 +6,7 @@
 #include  "../header/app.h"    		// private library - APP layer
 
 extern unsigned volatile int diff;
-
+extern int seg;
 extern enum FSMstate state;   // global variable
 extern enum SYSmode lpm_mode; // global variable
 
