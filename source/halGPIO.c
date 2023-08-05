@@ -215,56 +215,6 @@ void __attribute__ ((interrupt(TIMER1_A1_VECTOR))) TIMER1_A1_ISR (void)
          // TA1CCTL1 &= ~CCIFG;
           
           if (i==2) {
-              if(temp[0] < temp[1]){
-                  diff = temp[1] - temp[0];
-              }
-              else{
-                  //max value of TBR is 131071, in hex 0xFFFF
-                  diff = 0xFFFF - temp[0] + temp[1];
-              }
-              i=0;
-              LPM0_EXIT;
-          }
-          
-        break;
-      case TA1IV_TACCR1:        
-        //TA1CCTL1 &= ~CCIFG;
-        LPM0_EXIT;
-        break;             // Vector  4:  TACCR2 CCIFG
-      case TA1IV_6: break;                  // Vector  6:  Reserved CCIFG
-      case TA1IV_8: break;                  // Vector  8:  Reserved CCIFG
-      case TA1IV_TAIFG: break;              // Vector 10:  TAIFG
-      default: 	break;
-  }
-}
-//  #if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
-//  #pragma vector = TIMER1_A1_VECTOR
-//  __interrupt void Timer_A1 (void)
-//  #elif defined(__GNUC__)
-//  void __attribute__ ((interrupt(TIMER1_A1_VECTOR))) Timer_A1 (void)
-//  #else
-//  #error Compiler not supported!
-//  #endif
-//  {
-//    switch(__even_in_range(TA1IV,0x0A)){
-//        case TA1IV_NONE:
-//            break;
-//        /****** capture ISR *****
-//         *
-//         *      TB2 acts in capture
-//         * *********************/
-//        case TA1IV_TACCR1:           //CAPTURE ISR  
-//          TA1CCTL1 &= ~CCIFG;
-//          LPM0_EXIT;
-//          
-//            break;
-//          
-//        case TA1IV_TACCR2:           //CAPTURE ISR        
-//              temp[i] = TA1CCR2;
-//              i += 1;
-//             // TA1CCTL1 &= ~CCIFG;
-//          
-//          if (i==2) {
 //              if(temp[0] < temp[1]){
 //                  diff = temp[1] - temp[0];
 //              }
@@ -272,15 +222,22 @@ void __attribute__ ((interrupt(TIMER1_A1_VECTOR))) TIMER1_A1_ISR (void)
 //                  //max value of TBR is 131071, in hex 0xFFFF
 //                  diff = 0xFFFF - temp[0] + temp[1];
 //              }
-//              i=0;
-//              LPM0_EXIT;
-//          }
-//          break;
-//        
-//
-//        }
-//  }
-
+              diff = temp[1] - temp[0];
+              i=0;
+              LPM0_EXIT;
+          }
+          
+        break;
+      case TA1IV_TACCR1:        
+        //TA1CCTL1 &= ~CCIFG;
+        //LPM0_EXIT;
+        break;             // Vector  4:  TACCR2 CCIFG
+      case TA1IV_6: break;                  // Vector  6:  Reserved CCIFG
+      case TA1IV_8: break;                  // Vector  8:  Reserved CCIFG
+      case TA1IV_TAIFG: break;              // Vector 10:  TAIFG
+      default: 	break;
+  }
+}
 
 // Timer A0 interrupt service routine
 #if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
@@ -294,23 +251,6 @@ void __attribute__ ((interrupt(TIMER0_A0_VECTOR))) Timer_A (void)
 {
   LPM0_EXIT;
 }
-
-
-
-//#if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
-//#pragma vector = TIMER0_A1_VECTOR
-//__interrupt void Timer_A01 (void)
-//#elif defined(__GNUC__)
-//void __attribute__ ((interrupt(TIMER0_A1_VECTOR))) Timer_A01 (void)
-//#else
-//#error Compiler not supported!
-//#endif
-//{
-//  TA0CCTL0 &= ~CCIE;           
-//
-//  LPM0_EXIT;
-//
-//}
 
 /** _______________________________________________________________________________________________*
  *                                                                                                 *

@@ -23,7 +23,7 @@ void sendFormatMessage( int a, int b, int c, int d) {
 void sysConfig(){
     GPIOconfig();
     TimerA0_Config();
-    TimerA1_Config();
+  //  TimerA1_Config();
     lcd_init();
     DCO_config();
     UART_Config();
@@ -31,9 +31,15 @@ void sysConfig(){
 }
 
 void set_angel(int phi){
+    TA1CTL=TACLR;
+    TA1CCR0 = MAX_TBR-3;                             // 60 ms Period/2
+    TA1CCTL1 |= OUTMOD_6 ;                       // TBCCR1 toggle/set
+
+    TA1CTL = TASSEL_2 | MC_1 ;          // counts to CCR0
     phi = phi*10 +510;
     TA1CCR1=phi;
-    start_PWM();
+    TA1CTL |= CCIE;
+  //  start_PWM();
 }
 
 void lcd_reset(){
@@ -49,6 +55,7 @@ void long_delay(){
 }
 
 void LDR_measurement(unsigned volatile int arr[]){
+
 
     LDR1SEL |= LDR0;                            // Enable A/D channel A0
     LDR2SEL |= LDR1;                            // Enable A/D channel A0
@@ -83,6 +90,11 @@ void LDR_measurement(unsigned volatile int arr[]){
 }
 
 void trigger_ultrasonic(){
+    TA1CTL=TACLR;
+    TA1CCR0 = MAX_TBR-3;                             // 60 ms Period/2
+    TA1CCTL2 = CAP | CCIS_0 | CM_3 | SCS;                       // TACCR2 toggle/set
+
+    TA1CTL = TASSEL_2 | MC_1 | ID_2;          // counts to CCR0
     delay_us(del60ms);
     TA1CCTL2 |=CCIE;
 
@@ -129,17 +141,15 @@ void flash_config(){
   BCSCTL1 = CALBC1_1MHZ;                    // Set DCO to 1MHz
   DCOCTL = CALDCO_1MHZ;
   FCTL2 = FWKEY + FSSEL0 + FN1;             // MCLK/3 for Flash Timing Generator
-  value = 0;                                // initialize value
+  value[0] = '\0';                                // initialize value
 
 }
 
-
-void write_SegC (char value)
-{
+void write_SegC (char* value, int seg){
   char *Flash_ptr;                          // Flash pointer
   unsigned int i;
 
-  Flash_ptr = (char *) 0x1040;              // Initialize Flash pointer
+  Flash_ptr = (char *) seg;              // Initialize Flash pointer
   FCTL1 = FWKEY + ERASE;                    // Set Erase bit
   FCTL3 = FWKEY;                            // Clear Lock bit
   *Flash_ptr = 0;                           // Dummy write to erase Flash segment
@@ -148,15 +158,14 @@ void write_SegC (char value)
 
   for (i=0; i<64; i++)
   {
-    *Flash_ptr++ = value;                   // Write value to flash
+    *Flash_ptr++ = *value++;                   // Write value to flash
   }
 
   FCTL1 = FWKEY;                            // Clear WRT bit
   FCTL3 = FWKEY + LOCK;                     // Set LOCK bit
 }
 
-void copy_C2D (void)
-{
+void copy_C2D (void){
   char *Flash_ptrC;                         // Segment C pointer
   char *Flash_ptrD;                         // Segment D pointer
   unsigned int i;

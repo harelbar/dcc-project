@@ -6,7 +6,7 @@
  *                                      *
  *         stabalize                    *
  *______________________________________*/
-
+/*
 //void stabalize() {
 //    int j;
 //    FLL_CTL0 |= XCAP14PF;                     // Configure load caps
@@ -17,7 +17,7 @@
 //        for ( j = 0x47; j > 0; j--);             // Time for flag to set
 //    } while ((IFG1 & OFIFG));                   // OSCFault flag still set?
 //}
-
+*/
 /*______________________________________
  *                                      *
  *         GPIO configuration           *
@@ -62,23 +62,13 @@ void TimerA1_Config(){
     
     //  TB2_CONFIG
     TA1CCTL2 |= CAP | CCIS_0 | CM_3 | SCS;                       // TACCR2 toggle/set
-    /// removed ccie
- 
-    /**
-     * WHY SHULD THEY HAVE CCIE>? MAYBE WE GO TO IDLE, WOULD THEY SSTILL NEED IT?
-     * */
+
     TA1CTL |= TASSEL_2 | MC_1 | CCIE;          // counts to CCR0
 
-//    TA1CCTL2 = CAP + CM_3 + CCIE + SCS + CCIS_0;
-//                                            // TA0CCR1 Capture mode; CCI1A; Both
-//                                            // Rising and Falling Edge; interrupt enable
-//  TA1CTL |= TASSEL_2 + MC_2 + TACLR;        // SMCLK, Cont Mode; start timer
-
-  
     _BIS_SR(GIE);                     // enable interrupts globally
 }
 
-void TimerA0_Config(){
+void TimerA0_Config(){ 
     WDTCTL = WDTPW +WDTHOLD;                  // Stop WDT
 
     //  TB0_CONFIG
@@ -119,6 +109,7 @@ void DCO_config() {
 //    P1DIR |= RXLED + TXLED;
     P1OUT &= 0x01;
 }
+
 void UART_Config() {
   WDTCTL = WDTPW + WDTHOLD;                 // Stop WDT
 
@@ -130,7 +121,6 @@ void UART_Config() {
   UCA0CTL1 &= ~UCSWRST;                     // **Initialize USCI state machine**
   IE2 |= UCA0RXIE;                          // Enable USCI_A0 RX interrupt
 }
-
 
 void delay_us(unsigned int del){
     TACTL = TACLR;
@@ -147,17 +137,20 @@ void delay_us(unsigned int del){
 
   //  TBCCTL4 = OUTMOD_4 + CCIE;
 }
+
 void ADC_config0(){
     ADC10CTL0 = ADC10SHT_2 + ADC10ON + ADC10IE;             // ADC10ON, interrupt enabled
     ADC10CTL1 = INCH_0 + ADC10SSEL_3;                       // input A3 and SMCL // ADC10CLK/8
 
     ADC10AE0 |= BIT0;                                       // P1.3 ADC option select
 }
+
 void ADC_config1(){
     ADC10CTL0 = ADC10SHT_2 + ADC10ON + ADC10IE;             // ADC10ON, interrupt enabled
     ADC10CTL1 = INCH_3 + ADC10SSEL_3;                       // input A3 and SMCL // ADC10CLK/8
     ADC10AE0 |= BIT3;                                       // P1.3 ADC option select
 }
+
 void ADC_start(){
     ADC10CTL0 |= ENC + ADC10SC;                             // Sampling and conversion start
     //__bis_SR_register(LPM0_bits + GIE);

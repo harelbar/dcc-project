@@ -11,18 +11,23 @@ char st[16]="sdf",ff[16];
 extern int temp[2], side;
 volatile unsigned int Results[2];
 unsigned int Index,g=0;
-char  value;   
 
+char value[64];   
+int data1=0,data2=0,data3=0,data4;
+int segments[3]={0X1000,0X1040,0X1080};
+
+int seg=0;
+//segB[]="0X1040",segC[]="0X1080";
 
 void main(void){
     P2OUT = 0x00;
 
-    state = state1;       // start in idle state on RESET
+    state = state6;       // start in idle state on RESET
     lpm_mode = mode0;     // start in idle state on RESET
     sysConfig();          // Configure GPIO, Stop Timers, Init LCD
     //_BIS_SR(CPUOFF);                          // Enter LPM0
     int a = 0;
-    int inc = 3;
+    int inc = 6;
 
     while(1){
 
@@ -37,22 +42,28 @@ void main(void){
             a = 0;
             while(state == state1){    //servo motor
                 a+=inc;
-                if(a>179 -inc || a < -inc)
+                if(a>179 -inc || a < -inc){
                   inc*=-1;
+                }
 
 
                 set_angel(a);       // set CCR3
+                for(int y=0; y<6; y++){
+                  delay_us(Periode_60ms_val);
+                }
+
                // LDR_measurement(Results);
                 trigger_ultrasonic();
 
-                print_measurments(a ,Results[1]);
+              //  print_measurments(a ,Results[1]);
                 delay_us(Periode_60ms_val);
                 TA1CCTL2 &= ~CCIE;
                 TA1CCTL1 &= ~CCIE;
                 TA1CCTL0 &= ~CCIE;
                 TA0CTL &= ~TAIE;
+                print_measurments(a ,diff);
 
-                sendFormatMessage(a,Results[0] ,Results[1],diff);
+                //sendFormatMessage(a,Results[0] ,Results[1],diff);
                 delay_us(1500);
                 //DelayUs(1600);
                 stop_PWM();
@@ -115,8 +126,9 @@ void main(void){
         case state6:
           while(1)                                  // Repeat forever
           {
-            write_SegC(value++);                    // Write segment C, increment value
-            copy_C2D();                             // Copy segment C to D
+            sprintf(value, "%d|%d|%d|%d", data1++,data2++,data3++,data4++);
+            write_SegC(value, segments[(seg++)%3]);                    // Write segment C, increment value
+           // copy_C2D();                             // Copy segment C to D
             __no_operation();                       // SET BREAKPOINT HERE
           }
         }
