@@ -22,7 +22,7 @@ int seg=0;
 void main(void){
     P2OUT = 0x00;
 
-    state = state6;       // start in idle state on RESET
+    state = state1;       // start in idle state on RESET
     lpm_mode = mode0;     // start in idle state on RESET
     sysConfig();          // Configure GPIO, Stop Timers, Init LCD
     //_BIS_SR(CPUOFF);                          // Enter LPM0
@@ -47,25 +47,33 @@ void main(void){
                 }
 
 
-                set_angel(a);       // set CCR3
+               // set_angel(a);       // set CCR3
                 for(int y=0; y<6; y++){
                   delay_us(Periode_60ms_val);
                 }
 
-               // LDR_measurement(Results);
+                LDR_measurement(Results);
                 trigger_ultrasonic();
-
-              //  print_measurments(a ,Results[1]);
+                Results[0]=(Results[0]+Results[1])/2;
+                Results[0]*=0.1;
+                print_measurments(Results[0] ,Results[1]);
                 delay_us(Periode_60ms_val);
                 TA1CCTL2 &= ~CCIE;
                 TA1CCTL1 &= ~CCIE;
                 TA1CCTL0 &= ~CCIE;
                 TA0CTL &= ~TAIE;
-                print_measurments(a ,diff);
+                //diff=diff/10;
+                diff=diff*0.069;
+                //print_measurments(a ,diff);
 
                 //sendFormatMessage(a,Results[0] ,Results[1],diff);
                 delay_us(1500);
                 //DelayUs(1600);
+                
+                sprintf(value, "%d|%d|%d|%d", diff,a,Results[0],Results[1]);
+                write_SegC(value, segments[(seg++)%3]);                    // Write segment C, increment value
+                // copy_C2D();                             // Copy segment C to D
+                __no_operation(); 
                 stop_PWM();
 
             }
